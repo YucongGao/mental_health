@@ -76,3 +76,106 @@ data <- data[!is.na(data$work_interfere),]
 data.origin <- data
 ```
 
+
+### Convert data to categories
+age: (-Inf,20] ~ 1, (20,35] ~ 2, (35,65] ~ 3, (65, Inf] ~ 4
+gender: male ~ 1, female ~ 2, trans ~ 3
+country: United State ~ 1, others ~ 0
+family_history: yes ~ 1, no ~ 0
+work_inference: never ~ 1, rarely ~ 2, sometimes ~ 3, often ~ 4
+no_employees: 1-5 ~ 1, 6-25 ~ 2, 26-100 ~ 3, 100-500 ~ 4, 500-1000 ~ 5, more than 1000 ~ 6
+remote_work: yes ~ 1, no ~ 0
+tech_company: yes ~ 1, no ~ 0
+benefits: yes ~ 1, no ~ 2, don't know ~ 3
+care_options: yes ~ 1, no ~ 2, TRUE ~ 3
+wellness_program: yes ~ 1, no ~ 2, don't know ~ 3
+seek_help: yes ~ 1, no ~ 2, don't know ~ 3
+anonymity: yes ~ 1, no ~ 2, don't know ~ 3
+leave: Very easy ~ 1, Somewhat easy ~ 2, Somewhat difficult ~ 3, Very difficult ~ 4, Don't know ~ 5
+mental_health_consequence: Yes ~ 1, No ~ 2, Maybe ~ 3
+phys_health_consequence: Yes ~ 1, No ~ 2, Maybe ~ 3
+coworkers: Yes ~ 1, No ~ 2, Some of them ~ 3
+supervisor: Yes ~ 1, No ~ 2, Some of them ~ 3
+mental_health_interview: Yes ~ 1, No ~ 2, Maybe ~ 3
+phys_health_interview: Yes ~ 1, No ~ 2, Maybe ~ 3
+mental_vs_physical: yes ~ 1, no ~ 2, don't know ~ 3
+obs_consequence: Yes ~ 1, No ~ 0
+
+
+```{r}
+dat = tibble(data.origin) %>% janitor::clean_names()
+
+dat_tibble = 
+   dat %>% 
+   mutate(age = factor(case_when(age == "(-Inf,20]" ~ 1, 
+                                 age == "(20,35]" ~ 2, 
+                                 age == "(35,65]" ~ 3, 
+                                 age == "(65, Inf]" ~ 4)), 
+          gender = factor(case_when(gender == "male" ~ 1, 
+                                    gender == "female" ~ 2, 
+                                    TRUE ~ 3)), 
+          country = factor(case_when(country == "United States" ~ 1, 
+                                     TRUE ~ 2)), 
+          family_history = factor(case_when(family_history == "Yes" ~ 1, 
+                                            TRUE ~ 2)), 
+          work_interfere = factor(case_when(work_interfere == "Never" ~ 1, 
+                                            work_interfere == "Rarely" ~ 2,
+                                            work_interfere == "Sometimes" ~ 3,
+                                            work_interfere == "Often" ~ 4)), 
+          no_employees = factor(case_when(no_employees == "1-5" ~ 1, 
+                                          no_employees == "6-25" ~ 2,
+                                          no_employees == "26-100" ~ 3,
+                                          no_employees == "100-500" ~ 4,
+                                          no_employees == "500-1000" ~ 5,
+                                          no_employees == "More than 1000" ~ 6)), 
+          remote_work = factor(case_when(remote_work == "Yes" ~ 1, 
+                                         TRUE ~ 2)), 
+          tech_company = factor(case_when(tech_company == "Yes" ~ 1, 
+                                         TRUE ~ 2)), 
+          benefits = factor(case_when(benefits == "Yes" ~ 1, 
+                                      benefits == "No" ~ 2,
+                                      T ~ 3)), 
+          care_options = factor(case_when(care_options == "Yes" ~ 1, 
+                                          care_options == "No" ~ 2,
+                                          T ~ 3)), 
+          wellness_program = factor(case_when(wellness_program == "Yes" ~ 1, 
+                                              wellness_program == "No" ~ 2,
+                                              TRUE ~ 3)), 
+          seek_help = factor(case_when(seek_help == "Yes" ~ 1, 
+                                       seek_help == "No" ~ 2,
+                                       TRUE ~ 3)), 
+          anonymity = factor(case_when(anonymity == "Yes" ~ 1, 
+                                       anonymity == "No" ~ 2,
+                                       TRUE ~ 3)), 
+          leave = factor(case_when(leave == "Very easy" ~ 1, 
+                                   leave == "Somewhat easy" ~ 2,
+                                   leave == "Somewhat difficult" ~ 3,
+                                   leave == "Very difficult" ~ 4,
+                                   TRUE ~ 5)), 
+          
+          mental_health_consequence = factor(case_when(mental_health_consequence == "Yes" ~ 1, 
+                                                       mental_health_consequence == "No" ~ 2,
+                                                       TRUE ~ 3)), 
+          phys_health_consequence = factor(case_when(phys_health_consequence == "Yes" ~ 1, 
+                                                     phys_health_consequence == "No" ~ 2,
+                                                     TRUE ~ 3)),
+          coworkers = factor(case_when(coworkers == "Yes" ~ 1, 
+                                       coworkers == "No" ~ 2,
+                                       TRUE ~ 3)),
+          supervisor = factor(case_when(supervisor == "Yes" ~ 1, 
+                                       supervisor == "No" ~ 2,
+                                       TRUE ~ 3)),
+          mental_health_interview = factor(case_when(mental_health_interview == "Yes" ~ 1, 
+                                       mental_health_interview == "No" ~ 2,
+                                       TRUE ~ 3)),
+          phys_health_interview = factor(case_when(phys_health_interview == "Yes" ~ 1, 
+                                       phys_health_interview == "No" ~ 2,
+                                       TRUE ~ 3)),
+          mental_vs_physical = factor(case_when(mental_vs_physical == "Yes" ~ 1, 
+                                       mental_vs_physical == "No" ~ 2,
+                                       TRUE ~ 3)), 
+          obs_consequence = factor(case_when(obs_consequence == "Yes" ~ 1, 
+                                             TRUE ~ 2)))
+
+```
+
