@@ -6,7 +6,9 @@ output: github_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+library(psych)
+library(GPArotation)
+library(lavaan)
 ```
 
 ### Package Loading
@@ -78,28 +80,28 @@ data.origin <- data
 
 
 ### Convert data to categories
-age: (-Inf,20] ~ 1, (20,35] ~ 2, (35,65] ~ 3, (65, Inf] ~ 4
-gender: male ~ 1, female ~ 2, trans ~ 3
-country: United State ~ 1, others ~ 0
-family_history: yes ~ 1, no ~ 0
-work_inference: never ~ 1, rarely ~ 2, sometimes ~ 3, often ~ 4
-no_employees: 1-5 ~ 1, 6-25 ~ 2, 26-100 ~ 3, 100-500 ~ 4, 500-1000 ~ 5, more than 1000 ~ 6
-remote_work: yes ~ 1, no ~ 0
-tech_company: yes ~ 1, no ~ 0
-benefits: yes ~ 1, no ~ 2, don't know ~ 3
-care_options: yes ~ 1, no ~ 2, TRUE ~ 3
-wellness_program: yes ~ 1, no ~ 2, don't know ~ 3
-seek_help: yes ~ 1, no ~ 2, don't know ~ 3
-anonymity: yes ~ 1, no ~ 2, don't know ~ 3
-leave: Very easy ~ 1, Somewhat easy ~ 2, Somewhat difficult ~ 3, Very difficult ~ 4, Don't know ~ 5
-mental_health_consequence: Yes ~ 1, No ~ 2, Maybe ~ 3
-phys_health_consequence: Yes ~ 1, No ~ 2, Maybe ~ 3
-coworkers: Yes ~ 1, No ~ 2, Some of them ~ 3
-supervisor: Yes ~ 1, No ~ 2, Some of them ~ 3
-mental_health_interview: Yes ~ 1, No ~ 2, Maybe ~ 3
-phys_health_interview: Yes ~ 1, No ~ 2, Maybe ~ 3
-mental_vs_physical: yes ~ 1, no ~ 2, don't know ~ 3
-obs_consequence: Yes ~ 1, No ~ 0
+age: (-Inf,20] ~ 1, (20,35] ~ 2, (35,65] ~ 3, (65, Inf] ~ 4 <br>
+gender: male ~ 1, female ~ 2, trans ~ 3 <br>
+country: United State ~ 1, others ~ 0 <br>
+family_history: yes ~ 1, no ~ 0 <br> 
+work_inference: never ~ 1, rarely ~ 2, sometimes ~ 3, often ~ 4 <br>
+no_employees: 1-5 ~ 1, 6-25 ~ 2, 26-100 ~ 3, 100-500 ~ 4, 500-1000 ~ 5, more than 1000 ~ 6 <br>
+remote_work: yes ~ 1, no ~ 0 <br>
+tech_company: yes ~ 1, no ~ 0 <br>
+benefits: yes ~ 1, no ~ 2, don't know ~ 3 <br>
+care_options: yes ~ 1, no ~ 2, TRUE ~ 3 <br>
+wellness_program: yes ~ 1, no ~ 2, don't know ~ 3 <br>
+seek_help: yes ~ 1, no ~ 2, don't know ~ 3 <br>
+anonymity: yes ~ 1, no ~ 2, don't know ~ 3 <br> 
+leave: Very easy ~ 1, Somewhat easy ~ 2, Somewhat difficult ~ 3, Very difficult ~ 4, Don't know ~ 5 <br>
+mental_health_consequence: Yes ~ 1, No ~ 2, Maybe ~ 3 <br>
+phys_health_consequence: Yes ~ 1, No ~ 2, Maybe ~ 3 <br>
+coworkers: Yes ~ 1, No ~ 2, Some of them ~ 3 <br>
+supervisor: Yes ~ 1, No ~ 2, Some of them ~ 3 <br>
+mental_health_interview: Yes ~ 1, No ~ 2, Maybe ~ 3 <br>
+phys_health_interview: Yes ~ 1, No ~ 2, Maybe ~ 3 <br>
+mental_vs_physical: yes ~ 1, no ~ 2, don't know ~ 3 <br>
+obs_consequence: Yes ~ 1, No ~ 0 <br>
 
 
 ```{r}
@@ -176,6 +178,57 @@ dat_tibble =
                                        TRUE ~ 3)), 
           obs_consequence = factor(case_when(obs_consequence == "Yes" ~ 1, 
                                              TRUE ~ 2)))
+
+
+
+
+
+dat_df = as.data.frame(dat_tibble)
+```
+
+
+## PCA
+
+```{r}
+features = dat_df[, c(6:23)]
+for (i in 1:18){
+   features[,i] = as.numeric(features[,i])
+}
+
+```
+
+demographic variables (age, gender, country, state, family history) are not included in the PCA
+response variable - treatment also not included in the pca
+
+Parallel analysis finds that 5 eigenvalue larger than the expected "random chance" eigenvalues based on randomly resampled data. So in the following exploratory factor analysis, we decide to explore 3, 4, 5, 6 factors to fit the model
+```{r}
+
+depressionprl = fa.parallel(features, cor = "poly", fa = "pc")
+
+depressionprl$pc.values
+
+depressionprl$pc.sim
+```
+
+
+## Exploratory Factor Analyais
+
+res_5 with 5 latent factors have the lowest BIC, so we use this five factors for our CFA
+```{r}
+# data to use for efa
+dep_efa = features
+res_3 = fa(dep_efa, 3, cor = "poly", rotate = "geominQ", fm = "wls")
+res_4 = fa(dep_efa, 4, cor = "poly", rotate = "geominQ", fm = "wls")
+res_5 = fa(dep_efa, 5, cor = "poly", rotate = "geominQ", fm = "wls")
+res_6 = fa(dep_efa, 6, cor = "poly", rotate = "geominQ", fm = "wls")
+
+res_5$loadings
+
+
+```
+
+## Confirmatory Factor Analysis
+```{r}
 
 ```
 

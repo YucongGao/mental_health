@@ -30,6 +30,13 @@ install_load(libs)
 ```
 
     ## 
+    ## Attaching package: 'ggplot2'
+
+    ## The following objects are masked from 'package:psych':
+    ## 
+    ##     %+%, alpha
+
+    ## 
     ## Attaching package: 'plotly'
 
     ## The following object is masked from 'package:ggplot2':
@@ -135,6 +142,10 @@ install_load(libs.methods)
     ## 
     ##     margin
 
+    ## The following object is masked from 'package:psych':
+    ## 
+    ##     outlier
+
 ``` r
 # Data loading
 data <- read.csv("./survey.csv")
@@ -198,24 +209,25 @@ data.origin <- data
 
 ### Convert data to categories
 
-age: (-Inf,20\] \~ 1, (20,35\] \~ 2, (35,65\] \~ 3, (65, Inf\] \~ 4
-gender: male \~ 1, female \~ 2, trans \~ 3 country: United State \~ 1,
-others \~ 0 family\_history: yes \~ 1, no \~ 0 work\_inference: never \~
-1, rarely \~ 2, sometimes \~ 3, often \~ 4 no\_employees: 1-5 \~ 1, 6-25
-\~ 2, 26-100 \~ 3, 100-500 \~ 4, 500-1000 \~ 5, more than 1000 \~ 6
-remote\_work: yes \~ 1, no \~ 0 tech\_company: yes \~ 1, no \~ 0
-benefits: yes \~ 1, no \~ 2, don’t know \~ 3 care\_options: yes \~ 1, no
-\~ 2, TRUE \~ 3 wellness\_program: yes \~ 1, no \~ 2, don’t know \~ 3
-seek\_help: yes \~ 1, no \~ 2, don’t know \~ 3 anonymity: yes \~ 1, no
-\~ 2, don’t know \~ 3 leave: Very easy \~ 1, Somewhat easy \~ 2,
-Somewhat difficult \~ 3, Very difficult \~ 4, Don’t know \~ 5
-mental\_health\_consequence: Yes \~ 1, No \~ 2, Maybe \~ 3
-phys\_health\_consequence: Yes \~ 1, No \~ 2, Maybe \~ 3 coworkers: Yes
-\~ 1, No \~ 2, Some of them \~ 3 supervisor: Yes \~ 1, No \~ 2, Some of
-them \~ 3 mental\_health\_interview: Yes \~ 1, No \~ 2, Maybe \~ 3
-phys\_health\_interview: Yes \~ 1, No \~ 2, Maybe \~ 3
-mental\_vs\_physical: yes \~ 1, no \~ 2, don’t know \~ 3
-obs\_consequence: Yes \~ 1, No \~ 0
+age: (-Inf,20\] \~ 1, (20,35\] \~ 2, (35,65\] \~ 3, (65, Inf\] \~ 4 <br>
+gender: male \~ 1, female \~ 2, trans \~ 3 <br> country: United State \~
+1, others \~ 0 <br> family\_history: yes \~ 1, no \~ 0 <br>
+work\_inference: never \~ 1, rarely \~ 2, sometimes \~ 3, often \~ 4
+<br> no\_employees: 1-5 \~ 1, 6-25 \~ 2, 26-100 \~ 3, 100-500 \~ 4,
+500-1000 \~ 5, more than 1000 \~ 6 <br> remote\_work: yes \~ 1, no \~ 0
+<br> tech\_company: yes \~ 1, no \~ 0 <br> benefits: yes \~ 1, no \~ 2,
+don’t know \~ 3 <br> care\_options: yes \~ 1, no \~ 2, TRUE \~ 3 <br>
+wellness\_program: yes \~ 1, no \~ 2, don’t know \~ 3 <br> seek\_help:
+yes \~ 1, no \~ 2, don’t know \~ 3 <br> anonymity: yes \~ 1, no \~ 2,
+don’t know \~ 3 <br> leave: Very easy \~ 1, Somewhat easy \~ 2, Somewhat
+difficult \~ 3, Very difficult \~ 4, Don’t know \~ 5 <br>
+mental\_health\_consequence: Yes \~ 1, No \~ 2, Maybe \~ 3 <br>
+phys\_health\_consequence: Yes \~ 1, No \~ 2, Maybe \~ 3 <br> coworkers:
+Yes \~ 1, No \~ 2, Some of them \~ 3 <br> supervisor: Yes \~ 1, No \~ 2,
+Some of them \~ 3 <br> mental\_health\_interview: Yes \~ 1, No \~ 2,
+Maybe \~ 3 <br> phys\_health\_interview: Yes \~ 1, No \~ 2, Maybe \~ 3
+<br> mental\_vs\_physical: yes \~ 1, no \~ 2, don’t know \~ 3 <br>
+obs\_consequence: Yes \~ 1, No \~ 0 <br>
 
 ``` r
 dat = tibble(data.origin) %>% janitor::clean_names()
@@ -291,4 +303,141 @@ dat_tibble =
                                        TRUE ~ 3)), 
           obs_consequence = factor(case_when(obs_consequence == "Yes" ~ 1, 
                                              TRUE ~ 2)))
+
+
+
+
+
+dat_df = as.data.frame(dat_tibble)
 ```
+
+## PCA
+
+``` r
+features = dat_df[, c(6:23)]
+for (i in 1:18){
+   features[,i] = as.numeric(features[,i])
+}
+```
+
+demographic variables (age, gender, country, state, family history) are
+not included in the PCA response variable - treatment also not included
+in the pca
+
+Parallel analysis finds that 5 eigenvalue larger than the expected
+“random chance” eigenvalues based on randomly resampled data. So in the
+following exploratory factor analysis, we decide to explore 3, 4, 5, 6
+factors to fit the model
+
+``` r
+depressionprl = fa.parallel(features, cor = "poly", fa = "pc")
+```
+
+    ## Warning in polychoric(x, correct = correct): The items do not have an equal
+    ## number of response alternatives, global set to FALSE.
+
+    ## Warning in matpLower(x, nvar, gminx, gmaxx, gminy, gmaxy): 4 cells were adjusted
+    ## for 0 values using the correction for continuity. Examine your data carefully.
+
+![](final_project_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+    ## Parallel analysis suggests that the number of factors =  NA  and the number of components =  5
+
+``` r
+depressionprl$pc.values
+```
+
+    ##  [1] 3.2657448 2.2128836 1.4784135 1.4196814 1.2209436 1.0642344 0.9986540
+    ##  [8] 0.8669736 0.7584376 0.7141746 0.6474682 0.6160305 0.5960855 0.5463365
+    ## [15] 0.4881976 0.4506828 0.3357053 0.3193524
+
+``` r
+depressionprl$pc.sim
+```
+
+    ##  [1] 1.2371210 1.1921571 1.1573392 1.1288808 1.0999410 1.0746448 1.0529129
+    ##  [8] 1.0308182 1.0093902 0.9866304 0.9633214 0.9404100 0.9181728 0.8911392
+    ## [15] 0.8703812 0.8446578 0.8159093 0.7861728
+
+## Exploratory Factor Analyais
+
+res\_5 with 5 latent factors have the lowest BIC, so we use this five
+factors for our CFA
+
+``` r
+# data to use for efa
+dep_efa = features
+res_3 = fa(dep_efa, 3, cor = "poly", rotate = "geominQ", fm = "wls")
+```
+
+    ## Warning in polychoric(r, correct = correct, weight = weight): The items do not
+    ## have an equal number of response alternatives, global set to FALSE.
+
+    ## Warning in matpLower(x, nvar, gminx, gmaxx, gminy, gmaxy): 4 cells were adjusted
+    ## for 0 values using the correction for continuity. Examine your data carefully.
+
+``` r
+res_4 = fa(dep_efa, 4, cor = "poly", rotate = "geominQ", fm = "wls")
+```
+
+    ## Warning in polychoric(r, correct = correct, weight = weight): The items do not
+    ## have an equal number of response alternatives, global set to FALSE.
+
+    ## Warning in polychoric(r, correct = correct, weight = weight): 4 cells were
+    ## adjusted for 0 values using the correction for continuity. Examine your data
+    ## carefully.
+
+``` r
+res_5 = fa(dep_efa, 5, cor = "poly", rotate = "geominQ", fm = "wls")
+```
+
+    ## Warning in polychoric(r, correct = correct, weight = weight): The items do not
+    ## have an equal number of response alternatives, global set to FALSE.
+
+    ## Warning in polychoric(r, correct = correct, weight = weight): 4 cells were
+    ## adjusted for 0 values using the correction for continuity. Examine your data
+    ## carefully.
+
+``` r
+res_6 = fa(dep_efa, 6, cor = "poly", rotate = "geominQ", fm = "wls")
+```
+
+    ## Warning in polychoric(r, correct = correct, weight = weight): The items do not
+    ## have an equal number of response alternatives, global set to FALSE.
+
+    ## Warning in polychoric(r, correct = correct, weight = weight): 4 cells were
+    ## adjusted for 0 values using the correction for continuity. Examine your data
+    ## carefully.
+
+``` r
+res_5$loadings
+```
+
+    ## 
+    ## Loadings:
+    ##                           WLS1   WLS2   WLS4   WLS3   WLS5  
+    ## work_interfere                    0.100 -0.168        -0.270
+    ## no_employees                             0.758              
+    ## remote_work                              0.514              
+    ## tech_company                             0.441        -0.225
+    ## benefits                   0.826        -0.107        -0.217
+    ## care_options               0.757         0.136              
+    ## wellness_program           0.493        -0.171         0.202
+    ## seek_help                  0.573                       0.190
+    ## anonymity                  0.638  0.306                     
+    ## leave                      0.178  0.422  0.179              
+    ## mental_health_consequence -0.169  0.120                0.397
+    ## phys_health_consequence           0.242                     
+    ## coworkers                         0.408                     
+    ## supervisor                        0.636               -0.113
+    ## mental_health_interview          -0.296         0.349  0.235
+    ## phys_health_interview                           0.980       
+    ## mental_vs_physical         0.229  0.467                     
+    ## obs_consequence                  -0.241                0.586
+    ## 
+    ##                 WLS1  WLS2  WLS4  WLS3  WLS5
+    ## SS loadings    2.368 1.305 1.178 1.107 0.839
+    ## Proportion Var 0.132 0.073 0.065 0.062 0.047
+    ## Cumulative Var 0.132 0.204 0.270 0.331 0.378
+
+## Confirmatory Factor Analysis
