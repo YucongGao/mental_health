@@ -88,24 +88,31 @@ work_inference: never ~ 1, rarely ~ 2, sometimes ~ 3, often ~ 4 <br>
 no_employees: 1-5 ~ 1, 6-25 ~ 2, 26-100 ~ 3, 100-500 ~ 4, 500-1000 ~ 5, more than 1000 ~ 6 <br>
 remote_work: yes ~ 1, no ~ 0 <br>
 tech_company: yes ~ 1, no ~ 0 <br>
-benefits: yes ~ 1, no ~ 2, don't know ~ 3 <br>
-care_options: yes ~ 1, no ~ 2, TRUE ~ 3 <br>
+*benefits: yes ~ 1, no ~ 2, don't know ~ 3 <br>
+*care_options: yes ~ 1, no ~ 2, TRUE ~ 3 <br>
 wellness_program: yes ~ 1, no ~ 2, don't know ~ 3 <br>
 seek_help: yes ~ 1, no ~ 2, don't know ~ 3 <br>
-anonymity: yes ~ 1, no ~ 2, don't know ~ 3 <br> 
-leave: Very easy ~ 1, Somewhat easy ~ 2, Somewhat difficult ~ 3, Very difficult ~ 4, Don't know ~ 5 <br>
+2*anonymity: yes ~ 1, no ~ 2, don't know ~ 3 <br> 
+1*leave: Very easy ~ 1, Somewhat easy ~ 2, Somewhat difficult ~ 3, Very difficult ~ 4, Don't know ~ 5 <br>
 mental_health_consequence: Yes ~ 1, No ~ 2, Maybe ~ 3 <br>
 phys_health_consequence: Yes ~ 1, No ~ 2, Maybe ~ 3 <br>
 coworkers: Yes ~ 1, No ~ 2, Some of them ~ 3 <br>
 supervisor: Yes ~ 1, No ~ 2, Some of them ~ 3 <br>
 mental_health_interview: Yes ~ 1, No ~ 2, Maybe ~ 3 <br>
 phys_health_interview: Yes ~ 1, No ~ 2, Maybe ~ 3 <br>
-mental_vs_physical: yes ~ 1, no ~ 2, don't know ~ 3 <br>
+3*mental_vs_physical: yes ~ 1, no ~ 2, don't know ~ 3 <br>
 obs_consequence: Yes ~ 1, No ~ 0 <br>
 
 
 ```{r}
 dat = tibble(data.origin) %>% janitor::clean_names()
+dat = 
+   dat %>% 
+   select(-leave, -anonymity, -mental_vs_physical, -care_options) %>% 
+   filter(benefits != "Don't know") %>% 
+   filter(wellness_program != "Don't know") %>% 
+   filter(seek_help != "Don't know") 
+   
 
 dat_tibble = 
    dat %>% 
@@ -137,24 +144,12 @@ dat_tibble =
           benefits = factor(case_when(benefits == "Yes" ~ 1, 
                                       benefits == "No" ~ 2,
                                       T ~ 3)), 
-          care_options = factor(case_when(care_options == "Yes" ~ 1, 
-                                          care_options == "No" ~ 2,
-                                          T ~ 3)), 
           wellness_program = factor(case_when(wellness_program == "Yes" ~ 1, 
                                               wellness_program == "No" ~ 2,
                                               TRUE ~ 3)), 
           seek_help = factor(case_when(seek_help == "Yes" ~ 1, 
                                        seek_help == "No" ~ 2,
                                        TRUE ~ 3)), 
-          anonymity = factor(case_when(anonymity == "Yes" ~ 1, 
-                                       anonymity == "No" ~ 2,
-                                       TRUE ~ 3)), 
-          leave = factor(case_when(leave == "Very easy" ~ 1, 
-                                   leave == "Somewhat easy" ~ 2,
-                                   leave == "Somewhat difficult" ~ 3,
-                                   leave == "Very difficult" ~ 4,
-                                   TRUE ~ 5)), 
-          
           mental_health_consequence = factor(case_when(mental_health_consequence == "Yes" ~ 1, 
                                                        mental_health_consequence == "No" ~ 2,
                                                        TRUE ~ 3)), 
@@ -173,9 +168,6 @@ dat_tibble =
           phys_health_interview = factor(case_when(phys_health_interview == "Yes" ~ 1, 
                                        phys_health_interview == "No" ~ 2,
                                        TRUE ~ 3)),
-          mental_vs_physical = factor(case_when(mental_vs_physical == "Yes" ~ 1, 
-                                       mental_vs_physical == "No" ~ 2,
-                                       TRUE ~ 3)), 
           obs_consequence = factor(case_when(obs_consequence == "Yes" ~ 1, 
                                              TRUE ~ 2)))
 
@@ -187,20 +179,29 @@ dat_df = as.data.frame(dat_tibble)
 ```
 
 
+
 ## PCA
 
 ```{r}
-features = dat_df[, c(6:23)]
-for (i in 1:18){
+features = dat_df[, c(6:19)]
+for (i in 1:length(features)){
    features[,i] = as.numeric(features[,i])
 }
 
+
+features = features[,c(-2, -7)]
+```
+
+```{r}
+library(corrplot)
+a = cor(features)
+corrplot(a)
 ```
 
 demographic variables (age, gender, country, state, family history) are not included in the PCA
 response variable - treatment also not included in the pca
 
-Parallel analysis finds that 5 eigenvalue larger than the expected "random chance" eigenvalues based on randomly resampled data. So in the following exploratory factor analysis, we decide to explore 3, 4, 5, 6 factors to fit the model
+Parallel analysis finds that 4 eigenvalue larger than the expected "random chance" eigenvalues based on randomly resampled data. So in the following exploratory factor analysis, we decide to explore 3, 4, 5, 6 factors to fit the model
 ```{r}
 
 depressionprl = fa.parallel(features, cor = "poly", fa = "pc")
@@ -208,27 +209,110 @@ depressionprl = fa.parallel(features, cor = "poly", fa = "pc")
 depressionprl$pc.values
 
 depressionprl$pc.sim
+
 ```
 
 
 ## Exploratory Factor Analyais
 
-res_5 with 5 latent factors have the lowest BIC, so we use this five factors for our CFA
+
 ```{r}
 # data to use for efa
 dep_efa = features
-res_3 = fa(dep_efa, 3, cor = "poly", rotate = "geominQ", fm = "wls")
+res_3 = fa(dep_efa, 3, cor = "poly",  rotate = "geominQ", fm = "wls")
+res_3$loadings
 res_4 = fa(dep_efa, 4, cor = "poly", rotate = "geominQ", fm = "wls")
+
+
 res_5 = fa(dep_efa, 5, cor = "poly", rotate = "geominQ", fm = "wls")
+
+
+
 res_6 = fa(dep_efa, 6, cor = "poly", rotate = "geominQ", fm = "wls")
 
+
+res_3$loadings
+res_4$loadings
 res_5$loadings
+res_6$loadings
+
 
 
 ```
 
-## Confirmatory Factor Analysis
+### Model Comparison
+For the above models in Exploratory factor analyis, we use BIC as the matrix to identify model with optimal number of factors. As a result, four-factor model has the smallest BIC which is 31.25. 
 ```{r}
+BIC = c(res_3$BIC, res_4$BIC, res_5$BIC, res_6$BIC)
+model = c("three-factor", "four-factor", "five-factor", "six-factor")
+
+
+data.frame(model, 
+          BIC)
+```
+
+
+## Confirmatory Factor Analysis
+As the EFA shows, model with four factors has the best performance. According to the loading result of this model, we choose items with loading greater than 0.4 to construct the model for Confirmatory Factor Analysis.<br>
+
+
+pc1 Company Policy: remote_work + tech_company + benefits + wellness_program 
+pc2 Health Issue in Interview: mental_health_interview  + phys_health_interview 
+pc3 Discussion with Colleagues: phys_health_consequence + coworkers + supervisor
+pc4 Health Discussion Consequence: work_interfere + mental_health_consequence + obs_consequence
+
+### Model 1 - no correlated factors
+```{r}
+dep_cfa = features
+
+# in model1, we use the four factor model in EFA 
+model1 = 
+   "pc1 = ~ remote_work + tech_company + benefits + wellness_program  
+    pc2 = ~ mental_health_interview  + phys_health_interview   
+    pc3 = ~ phys_health_consequence + coworkers + supervisor
+    pc4 = ~ work_interfere + mental_health_consequence + obs_consequence
+"
+
+fit_model1 = cfa(model1, data = dep_cfa,std.lv = T, ordered = names(dep_cfa), check.gradient = FALSE, optim.method = "BFGS",
+                 optim.force.converged = T, check.post = F)
+summary(fit_model1, rsquare = T, fit.measures = T)
+
+```
+
+### Is there any modification indices?
+As the result shows, the error terms of physical health consequence and mental health consequence are correlated with each other with the modification indices equals to 44.661. In addition, the error terms of benefits and mental health consequence are also correlated with MI = 9.8. 
+```{r}
+modindices(fit_model1, power = T, sort = T)
+```
+
+### Model 2 - error term added
+In model 2, we added the correlated error term to model11. 
+```{r}
+model2 = 
+   "# latent variables definition
+    pc1 = ~ remote_work + tech_company + benefits + wellness_program  
+    pc2 = ~ mental_health_interview  + phys_health_interview   
+    pc3 = ~ phys_health_consequence + coworkers + supervisor
+    pc4 = ~ work_interfere + mental_health_consequence + obs_consequence
+    
+    #residual covariance
+    phys_health_consequence ~~ mental_health_consequence
+    mental_health_consequence ~~ benefits
+"
+
+fit_model2 = cfa(model2, data = dep_cfa,std.lv = T, ordered = names(dep_cfa), check.gradient = FALSE, optim.method = "BFGS",
+                 optim.force.converged = T, check.post = F)
+summary(fit_model2, rsquare = T, fit.measures = T)
+```
+
+### Model comparison - before and after mi
+By comparing the model1 and model2, model2 added two error term correlation. Model1 has a chi-squared test with p-value < 0.001, which indicates bad fit. However, model2 with a chisquared test p-value = 0.074, indicating good fit. On the other hand, model2 also performs better according to its CFI(0.976), TLI(0.965) and RSMEA(0.024). Therefore, we decided to use model2 for the later structural equation model. 
+```{r}
+metrics = c("RSMEA", "CFI", "TLI", "Chi-square p-value", "df")
+model1 = c(0.051, 0.889, 0.847, 0.000, 48)
+model2 = c(0.024, 0.976, 0.965, 0.074, 46)
+
+knitr::kable(data.frame(metrics, model1, model2)) 
 
 ```
 
